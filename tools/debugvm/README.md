@@ -123,11 +123,31 @@ which is the easiest way to get a reproducer in and a crash log out. With no
 
 ```
 ./build-kernel.sh --kasan --reconfig
-./run-vm.sh --gdb -m 4G
+./run-vm.sh -m 4G
 ```
 
-Generic KASAN roughly doubles kernel memory use and slows the guest
-noticeably, which is why it is a separate fragment.
+Generic KASAN costs roughly a quarter of guest RAM for the shadow region and
+slows the guest noticeably, which is why it is a separate fragment. Give the VM
+at least 4G.
+
+The fragment also builds the KUnit KASAN test suite as a module, so you can
+confirm KASAN is really catching things before you go hunting a real bug:
+
+```
+# modprobe kasan_test
+# dmesg | grep "Totals:"
+# kasan: pass:62 fail:1 skip:12 total:75
+```
+
+One expected failure, `kasan_strings`: the suite wants KASAN to report the
+`strscpy(ptr, src + KASAN_GRANULE_SIZE, ...)` read, but on x86
+`sized_strscpy()` reads through `load_unaligned_zeropad()`, which is raw inline
+asm with an exception-table entry, so the compiler emits no KASAN check for it.
+The rest of that same test, `strchr` included, reports correctly. The skips are
+the tests for the other KASAN modes.
+
+`run-vm.sh` passes `log_buf_len=16M` because a KASAN run fills the default ring
+buffer and scrolls the first reports away.
 
 ## Rebuilding
 

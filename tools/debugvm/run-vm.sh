@@ -87,7 +87,7 @@ fi
 SHARE="${SHARE:-$DEBUGVM_OUT/share}"
 mkdir -p -- "$SHARE" "$MODULES_DIR/lib/modules"
 
-APPEND="root=$DEBUGVM_ROOT_DEV rootwait rw console=ttyS0,115200n8 earlyprintk=serial,ttyS0,115200 nokaslr no_hash_pointers"
+APPEND="root=$DEBUGVM_ROOT_DEV rootwait rw console=ttyS0,115200n8 earlyprintk=serial,ttyS0,115200 nokaslr no_hash_pointers log_buf_len=16M"
 [ -n "$APPEND_EXTRA" ] && APPEND="$APPEND $APPEND_EXTRA"
 
 args=(
